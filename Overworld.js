@@ -1,53 +1,88 @@
 class Overworld {
-    constructor(config) {
-        this.element = config.element
-        this.canvas = this.element.querySelector('.game-canvas')
-        this.ctx = this.canvas.getContext('2d')
-        this.map = null;
-    }
-    
-    startGameLoop() {
-        const step = () => {
-            //Clear of canvas
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+  constructor(config) {
+    this.element = config.element;
+    this.canvas = this.element.querySelector(".game-canvas");
+    this.ctx = this.canvas.getContext("2d");
+    this.map = null;
+  }
 
-            //Establish camera person
-            const cameraPerson = this.map.gameObjects.hero;
+  startGameLoop() {
+    const step = () => {
+      //Clear of canvas
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-            //Draw lower layer
-            this.map.drawLowerImage(this.ctx, cameraPerson)
+      //Establish camera person
+      const cameraPerson = this.map.gameObjects.hero;
 
-            //Update all objects
-            Object.values(this.map.gameObjects).forEach(object => {
-                object.update({
-                    arrow: this.directionInput.direction,
-                    map: this.map
-                })
+      //Draw lower layer
+      this.map.drawLowerImage(this.ctx, cameraPerson);
 
-            })
+      //Update all objects
+      Object.values(this.map.gameObjects).forEach((object) => {
+        object.update({
+          arrow: this.directionInput.direction,
+          map: this.map,
+        });
+      });
 
-            //Draw game objects
-            Object.values(this.map.gameObjects).forEach(object => {
-                object.sprite.draw(this.ctx, cameraPerson)
-            })
+      //Draw game objects
+      Object.values(this.map.gameObjects)
+        .sort((a, b) => {
+          return a.y - b.y;
+        })
+        .forEach((object) => {
+          object.sprite.draw(this.ctx, cameraPerson);
+        });
 
-            //Draw upper layer
-            this.map.drawUpperImage(this.ctx, cameraPerson)
+      //Draw upper layer
+      this.map.drawUpperImage(this.ctx, cameraPerson);
 
-            requestAnimationFrame(() => {
-                step();
-            })
-        }
+      requestAnimationFrame(() => {
         step();
-    }
+      });
+    };
+    step();
+  }
 
-    init() {
-        this.map = new OverworldMap(window.OverworldMaps.DemoRoom)
-        this.map.mountObjects()
+  bindActionInput() {
+    new KeyPressListener("Enter", () => {
+      //Check if there is a npc to talk to
+      this.map.checkForActionCutscene();
+    });
+  }
 
-        this.directionInput = new DirectionInput()
-        this.directionInput.init()
+  bindHeroPositionCheck() {
+    document.addEventListener("PersonWalkingComplete", (e) => {
+      if (e.detail.whoId === "hero") {
+        this.map.checkForFootstepCutscene();
+      }
+    });
+  }
 
-        this.startGameLoop()
-    }
+  startMap(mapConfig) {
+    this.map = new OverworldMap(mapConfig);
+    this.map.overworld = this;
+    this.map.mountObjects();
+  }
+
+  init() {
+    this.startMap(window.OverworldMaps.DemoRoom);
+
+    this.bindActionInput();
+    this.bindHeroPositionCheck();
+
+    this.directionInput = new DirectionInput();
+    this.directionInput.init();
+
+    this.startGameLoop();
+
+    /* this.map.startCutscene([
+      { who: "hero", type: "walk", direction: "down" },
+      { who: "hero", type: "walk", direction: "down" },
+      { who: "npcA", type: "walk", direction: "up" },
+      { who: "npcA", type: "walk", direction: "left" },
+      { who: "hero", type: "stand", direction: "right", time: 200 },
+      { type: "textMessage", text: "hello there" },
+    ]); */
+  }
 }
