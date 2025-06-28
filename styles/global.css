@@ -13,7 +13,7 @@
 }
 
 body {
-  background-color: grey;
+  background: grey;
   overflow: hidden;
   padding: 0;
   margin: 0;

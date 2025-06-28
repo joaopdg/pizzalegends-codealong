@@ -14,9 +14,6 @@ class Overworld {
       //Establish camera person
       const cameraPerson = this.map.gameObjects.hero;
 
-      //Draw lower layer
-      this.map.drawLowerImage(this.ctx, cameraPerson);
-
       //Update all objects
       Object.values(this.map.gameObjects).forEach((object) => {
         object.update({
@@ -24,6 +21,9 @@ class Overworld {
           map: this.map,
         });
       });
+
+      //Draw lower layer
+      this.map.drawLowerImage(this.ctx, cameraPerson);
 
       //Draw game objects
       Object.values(this.map.gameObjects)
@@ -66,7 +66,7 @@ class Overworld {
   }
 
   init() {
-    this.startMap(window.OverworldMaps.Kitchen);
+    this.startMap(window.OverworldMaps.DemoRoom);
 
     this.bindActionInput();
     this.bindHeroPositionCheck();

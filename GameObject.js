@@ -20,7 +20,7 @@ class GameObject {
     this.isMounted = true;
     map.addWall(this.x, this.y);
 
-    //Kick off behavior after delay
+    //Kick off/restart behavior after delay
     setTimeout(() => {
       this.doBehaviorEvent(map);
     }, 10);
