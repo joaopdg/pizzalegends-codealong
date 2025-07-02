@@ -48,10 +48,12 @@ class Combatant {
     this.pizzaElement.setAttribute("alt", this.name);
     this.pizzaElement.setAttribute("data-team", this.team);
 
-    this.hpFills = document.querySelectorAll(
+    this.hpFills = this.hudElement.querySelectorAll(
       ".Combatant_life-container > rect"
     );
-    this.xpFills = document.querySelectorAll(".Combatant_xp-container > rect");
+    this.xpFills = this.hudElement.querySelectorAll(
+      ".Combatant_xp-container > rect"
+    );
   }
 
   update(changes = {}) {
@@ -66,6 +68,52 @@ class Combatant {
     this.xpFills.forEach((rect) => (rect.style.width = `${this.xpPercent}%`));
 
     this.hudElement.querySelector(".Combatant_level").innerText = this.level;
+
+    const statusElement = this.hudElement.querySelector(".Combatant_status");
+    if (this.status) {
+      statusElement.innerText = this.status.type;
+      statusElement.style.display = "block";
+    } else {
+      statusElement.innerText = "";
+      statusElement.style.display = "none";
+    }
+  }
+
+  getReplacedEvents(originalEvents) {
+    if (this.status?.type === "clumsy" && utils.randomFromArray([true, false, false])) {
+      return [
+        {type: "textMessage", text: `${this.name} flops over!`}
+      ]
+    }
+
+    return originalEvents
+  }
+
+  getPostEvents() {
+    if (this.status?.type === "saucy") {
+      return [
+        { type: "textMessage", text: "Felling saucy" },
+        { type: "stateChange", recover: 5, onCaster: true },
+      ];
+    }
+
+    return [];
+  }
+
+  decrementStatus() {
+    if (this.status?.expiresIn > 0) {
+      this.status.expiresIn -= 1
+      if (this.status.expiresIn === 0) {
+        this.update({
+          status: null
+        })
+        return {
+          type: "textMessage",
+          text: "Status expired!"
+        }
+      }
+    }
+    return null;
   }
 
   init(container) {
