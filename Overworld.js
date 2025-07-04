@@ -37,9 +37,11 @@ class Overworld {
       //Draw upper layer
       this.map.drawUpperImage(this.ctx, cameraPerson);
 
-      requestAnimationFrame(() => {
-        step();
-      });
+      if (!this.map.isPaused) {
+        requestAnimationFrame(() => {
+          step();
+        });
+      }
     };
     step();
   }
@@ -48,6 +50,11 @@ class Overworld {
     new KeyPressListener("Enter", () => {
       //Check if there is a npc to talk to
       this.map.checkForActionCutscene();
+    });
+    new KeyPressListener("Escape", () => {
+      if (!this.map.isCutscenePlaying) {
+        this.map.startCutscene([{ type: "pause" }]);
+      }
     });
   }
 
@@ -59,14 +66,48 @@ class Overworld {
     });
   }
 
-  startMap(mapConfig) {
+  startMap(mapConfig, heroInitialState = null) {
     this.map = new OverworldMap(mapConfig);
     this.map.overworld = this;
     this.map.mountObjects();
+
+    if (heroInitialState) {
+      const { hero } = this.map.gameObjects;
+      hero.x = heroInitialState.x;
+      hero.y = heroInitialState.y;
+      hero.direction = heroInitialState.direction;
+    }
+
+    this.progress.mapId = mapConfig.id;
+    this.progress.startingHeroX = this.map.gameObjects.hero.x;
+    this.progress.startingHeroY = this.map.gameObjects.hero.y;
+    this.progress.startingHeroDirection = this.map.gameObjects.hero.direction;
   }
 
-  init() {
-    this.startMap(window.OverworldMaps.DemoRoom);
+  async init() {
+    const container = document.querySelector(".game-container");
+    this.progress = new Progress();
+
+    this.titleScreen = new TitleScreen({
+      progress: this.progress,
+    });
+
+    //const useSaveFile = await this.titleScreen.init(container);
+    const useSaveFile = false;
+    let initialHeroState = null;
+    if (useSaveFile) {
+      this.progress.load();
+      initialHeroState = {
+        x: this.progress.startingHeroX,
+        y: this.progress.startingHeroY,
+        direction: this.progress.startingHeroDirection,
+      };
+    }
+
+    this.hud = new Hud();
+    this.hud.init(container);
+
+    this.startMap(window.OverworldMaps[this.progress.mapId], initialHeroState);
 
     this.bindActionInput();
     this.bindHeroPositionCheck();
@@ -76,6 +117,6 @@ class Overworld {
 
     this.startGameLoop();
 
-    this.map.startCutscene([{ type: "battle" }]);
+    //this.map.startCutscene([{ type: "battle", enemyId: "beth" }]);
   }
 }

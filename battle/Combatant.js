@@ -3,6 +3,7 @@ class Combatant {
     Object.keys(config).forEach((key) => {
       this[key] = config[key];
     });
+    this.hp = typeof this.hp === "undefined" ? this.maxHp : this.hp;
     this.battle = battle;
   }
 
@@ -16,7 +17,11 @@ class Combatant {
   }
 
   get isActive() {
-    return this.battle.activeCombatants[this.team] === this.id;
+    return this.battle?.activeCombatants[this.team] === this.id;
+  }
+
+  get givesXp() {
+    return this.level * 20;
   }
 
   createElement() {
@@ -80,13 +85,14 @@ class Combatant {
   }
 
   getReplacedEvents(originalEvents) {
-    if (this.status?.type === "clumsy" && utils.randomFromArray([true, false, false])) {
-      return [
-        {type: "textMessage", text: `${this.name} flops over!`}
-      ]
+    if (
+      this.status?.type === "clumsy" &&
+      utils.randomFromArray([true, false, false])
+    ) {
+      return [{ type: "textMessage", text: `${this.name} flops over!` }];
     }
 
-    return originalEvents
+    return originalEvents;
   }
 
   getPostEvents() {
@@ -102,15 +108,15 @@ class Combatant {
 
   decrementStatus() {
     if (this.status?.expiresIn > 0) {
-      this.status.expiresIn -= 1
+      this.status.expiresIn -= 1;
       if (this.status.expiresIn === 0) {
         this.update({
-          status: null
-        })
+          status: null,
+        });
         return {
           type: "textMessage",
-          text: "Status expired!"
-        }
+          text: "Status expired!",
+        };
       }
     }
     return null;

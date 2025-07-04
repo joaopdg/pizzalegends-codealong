@@ -55,19 +55,82 @@ class BattleEvent {
 
     await utils.wait(600);
 
+    this.battle.playerTeam.update();
+    this.battle.enemyTeam.update();
+
     target.pizzaElement.classList.remove("battle-damage-blink");
     resolve();
   }
 
   submissionMenu(resolve) {
+    const { caster } = this.event;
     const menu = new SubmissionMenu({
       caster: this.event.caster,
       enemy: this.event.enemy,
+      items: this.battle.items,
+      replacements: Object.values(this.battle.combatants).filter((c) => {
+        return c.id !== caster.id && c.team === caster.team && c.hp > 0;
+      }),
       onComplete: (submission) => {
         resolve(submission);
       },
     });
+
     menu.init(this.battle.element);
+  }
+
+  replacementMenu(resolve) {
+    const menu = new ReplacementMenu({
+      replacements: Object.values(this.battle.combatants).filter((c) => {
+        return c.team === this.event.team && c.hp > 0;
+      }),
+      onComplete: (replacement) => {
+        resolve(replacement);
+      },
+    });
+    menu.init(this.battle.element);
+  }
+
+  async replace(resolve) {
+    const { replacement } = this.event;
+
+    const prevCombatant =
+      this.battle.combatants[this.battle.activeCombatants[replacement.team]];
+    this.battle.activeCombatants[replacement.team] = null;
+    prevCombatant.update();
+    await utils.wait(400);
+
+    this.battle.activeCombatants[replacement.team] = replacement.id;
+    replacement.update();
+    await utils.wait(400);
+
+    this.battle.playerTeam.update();
+    this.battle.enemyTeam.update();
+
+    resolve();
+  }
+
+  giveXp(resolve) {
+    let amount = this.event.xp;
+    const { combatant } = this.event;
+    const step = () => {
+      if (amount > 0) {
+        amount -= 1;
+        combatant.xp += 1;
+
+        if (combatant.xp === combatant.maxXp) {
+          combatant.xp = 0;
+          combatant.maxXp = 100;
+          combatant.level += 1;
+        }
+
+        combatant.update();
+        requestAnimationFrame(step);
+        return;
+      }
+      resolve();
+    };
+    requestAnimationFrame(step);
   }
 
   animation(resolve) {

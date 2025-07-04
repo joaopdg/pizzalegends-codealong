@@ -18,7 +18,6 @@ class GameObject {
 
   mount(map) {
     this.isMounted = true;
-    map.addWall(this.x, this.y);
 
     //Kick off/restart behavior after delay
     setTimeout(() => {
@@ -29,11 +28,7 @@ class GameObject {
   update() {}
 
   async doBehaviorEvent(map) {
-    if (
-      map.isCutscenePlaying ||
-      this.behaviorLoop.length === 0 ||
-      this.isStanding
-    ) {
+    if (map.isCutscenePlaying || this.behaviorLoop.length === 0) {
       return;
     }
 
